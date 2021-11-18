@@ -48,7 +48,7 @@ const tryGetOperationId = (req) => {
 const createLogger = (req, data = {}) => {
   const logData = {
     ...data,
-    ...(config.additionalData?.(req) || {})
+    ...(config.initialData?.(req) || {})
   };
 
   const projectId = config.projectId?.(req);

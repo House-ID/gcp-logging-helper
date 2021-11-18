@@ -10,7 +10,7 @@ const { createLogger } = require('@houseid/gcp-logging-helper')({
     revisionId: process.env.GIT_COMMIT_SHA // set GIT_COMMIT_SHA=$COMMIT_SHA in Cloud Build
   }),
   serviceContext: () => ({ resourceType: 'cloud_run_revision' }),
-  additionalData: req => ({
+  initialData: req => ({
     req: {
       params: req.params,
       query: req.query

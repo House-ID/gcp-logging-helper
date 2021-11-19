@@ -45,112 +45,113 @@ const tryGetOperationId = (req) => {
   return null;
 };
 
-const createLogger = (req, data = {}) => {
-  const logData = {
-    ...data,
-    ...(config.initialData?.(req) || {})
-  };
-
-  const projectId = config.projectId?.(req);
-  if(projectId) {
-    const traceContext = tryGetTraceContextData(projectId, req);
-    if(traceContext) {
-      logData['logging.googleapis.com/trace'] = traceContextData.traceId;
-      logData['logging.googleapis.com/spanId'] = traceContextData.spanId;
-    }
-  }
-
-  logData.userId = config.userId ? config.userId(req) : tryGetJWTSub(req);
-
-  const sourceReference = config.sourceReference?.(req);
-  if(sourceReference)
-  {
-    logData.context = {
-      ...(logData.context || {}),
-      sourceReferences: [
-        ...(logData.context?.sourceReferences || []),
-        sourceReference,
-      ],
-      user: logData.userId,
-    };
-  }
-
-  const serviceContext = config.serviceContext?.(req);
-  if(serviceContext?.resourceType) {
-    logData.serviceContext = {
-      resourceType: serviceContext.resourceType,
-      service: serviceContext.service || process.env.K_SERVICE,
-      version: serviceContext.version || `${process.env.K_REVISION}`,        
-    };
-  }
-
-  const operationId = tryGetOperationId(req);
-  logData['logging.googleapis.com/labels'] = {
-    ...(logData['logging.googleapis.com/labels'] || {}),
-    operationId,
-    ...(config.labels(req) || {})
-  };
-
-  return {
-    debug: (message, data = {}) => {
-      console.log(JSON.stringify({
-        message,
-        severity: 'DEBUG',
-        ...logData,
-        ...data,
-      }));
-    },
-    info: (message, data = {}) => {
-      console.log(JSON.stringify({
-        message,
-        severity: 'INFO',
-        ...logData,
-        ...data,
-      }));
-    },
-    warning: (message, data = {}) => {
-      console.log(JSON.stringify({
-        message,
-        severity: 'WARNING',
-        ...logData,
-        ...data,
-      }));
-    },
-    error: (message, error = null, data = {}) => {
-      const errorLogData = {
-        message,
-        severity: 'ERROR',
-        '@type': 'type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent',
-        ...logData,
-        ...data,
-      };
-
-      if (error) {
-        errorLogData.error = util.inspect(error);
-        if (error.stack) {
-          errorLogData.exception = `${message}. ${error.stack}`;
-        }
-      }
-
-      errorLogData.context = errorLogData.context || {};
-
-      errorLogData.context.httpRequest = {
-        method: req.method,
-        url: req.originalUrl,
-        remoteIp: req.get('X-Forwarded-For') || req.connection.remoteAddress
-      };
-
-      console.error(JSON.stringify(errorLogData));
-    }
-  };
-};
-
-const createLoggerMiddleware = () => (req, res, next) => {
-  res.locals.logger = createLogger(req);
-  next();
-};
-
 module.exports = (config) => {
+
+  const createLogger = (req, data = {}) => {
+    const logData = {
+      ...data,
+      ...(config.initialData?.(req) || {})
+    };
+
+    const projectId = config.projectId?.(req);
+    if(projectId) {
+      const traceContext = tryGetTraceContextData(projectId, req);
+      if(traceContext) {
+        logData['logging.googleapis.com/trace'] = traceContextData.traceId;
+        logData['logging.googleapis.com/spanId'] = traceContextData.spanId;
+      }
+    }
+
+    logData.userId = config.userId ? config.userId(req) : tryGetJWTSub(req);
+
+    const sourceReference = config.sourceReference?.(req);
+    if(sourceReference)
+    {
+      logData.context = {
+        ...(logData.context || {}),
+        sourceReferences: [
+          ...(logData.context?.sourceReferences || []),
+          sourceReference,
+        ],
+        user: logData.userId,
+      };
+    }
+
+    const serviceContext = config.serviceContext?.(req);
+    if(serviceContext?.resourceType) {
+      logData.serviceContext = {
+        resourceType: serviceContext.resourceType,
+        service: serviceContext.service || process.env.K_SERVICE,
+        version: serviceContext.version || `${process.env.K_REVISION}`,        
+      };
+    }
+
+    const operationId = tryGetOperationId(req);
+    logData['logging.googleapis.com/labels'] = {
+      ...(logData['logging.googleapis.com/labels'] || {}),
+      operationId,
+      ...(config.labels(req) || {})
+    };
+
+    return {
+      debug: (message, data = {}) => {
+        console.log(JSON.stringify({
+          message,
+          severity: 'DEBUG',
+          ...logData,
+          ...data,
+        }));
+      },
+      info: (message, data = {}) => {
+        console.log(JSON.stringify({
+          message,
+          severity: 'INFO',
+          ...logData,
+          ...data,
+        }));
+      },
+      warning: (message, data = {}) => {
+        console.log(JSON.stringify({
+          message,
+          severity: 'WARNING',
+          ...logData,
+          ...data,
+        }));
+      },
+      error: (message, error = null, data = {}) => {
+        const errorLogData = {
+          message,
+          severity: 'ERROR',
+          '@type': 'type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent',
+          ...logData,
+          ...data,
+        };
+
+        if (error) {
+          errorLogData.error = util.inspect(error);
+          if (error.stack) {
+            errorLogData.exception = `${message}. ${error.stack}`;
+          }
+        }
+
+        errorLogData.context = errorLogData.context || {};
+
+        errorLogData.context.httpRequest = {
+          method: req.method,
+          url: req.originalUrl,
+          remoteIp: req.get('X-Forwarded-For') || req.connection.remoteAddress
+        };
+
+        console.error(JSON.stringify(errorLogData));
+      }
+    };
+  };
+
+  const createLoggerMiddleware = () => (req, res, next) => {
+    res.locals.logger = createLogger(req);
+    next();
+  };
+
   return {
     createLogger,
     createLoggerMiddleware,

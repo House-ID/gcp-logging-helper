@@ -57,8 +57,8 @@ module.exports = (config) => {
     if(projectId) {
       const traceContext = tryGetTraceContextData(projectId, req);
       if(traceContext) {
-        logData['logging.googleapis.com/trace'] = traceContextData.traceId;
-        logData['logging.googleapis.com/spanId'] = traceContextData.spanId;
+        logData['logging.googleapis.com/trace'] = traceContext.traceId;
+        logData['logging.googleapis.com/spanId'] = traceContext.spanId;
       }
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "@houseid/gcp-logging-helper",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Helper for writing structured JSON log messages to stdout/stderr compatible with Google Cloud Logging and Google Error Reporting",
   "main": "index.js",
   "author": "House:ID AB",

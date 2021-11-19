@@ -90,7 +90,7 @@ module.exports = (config) => {
     logData['logging.googleapis.com/labels'] = {
       ...(logData['logging.googleapis.com/labels'] || {}),
       operationId,
-      ...(config.labels(req) || {})
+      ...(config.labels?.(req) || {})
     };
 
     return {

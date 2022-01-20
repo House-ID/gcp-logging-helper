@@ -29,7 +29,7 @@ const tryGetJWTSub = req => {
     || tryGetJWTPayload(req.get('X-Forwarded-Authorization'));
 
   if(jwtPayload) {
-    const { sub } = JSON.parse(Buffer.from(userInfo, 'base64').toString('utf8'));
+    const { sub } = JSON.parse(Buffer.from(jwtPayload, 'base64').toString('utf8'));
     return sub;
   }
 
